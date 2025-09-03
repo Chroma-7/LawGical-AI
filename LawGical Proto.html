@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LawGical Proto HTML</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #eee;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    #chat {
+      width: 80%;
+      max-width: 700px;
+      height: 500px;
+      overflow-y: auto;
+      border: 1px solid #444;
+      border-radius: 10px;
+      padding: 10px;
+      background: #222;
+      margin-bottom: 10px;
+    }
+    .message {
+      margin: 8px 0;
+      padding: 8px;
+      border-radius: 8px;
+      max-width: 80%;
+    }
+    .user {
+      background: #3a3;
+      align-self: flex-end;
+    }
+    .assistant {
+      background: #333;
+      align-self: flex-start;
+    }
+    #inputArea {
+      display: flex;
+      width: 80%;
+      max-width: 700px;
+    }
+    #userInput {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #444;
+      border-radius: 8px;
+      background: #111;
+      color: #eee;
+    }
+    #sendBtn {
+      margin-left: 10px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      background: #3a3;
+      color: #fff;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>LawGical - AI Assistant for Legal Information</h1>
+  <div id="chat"></div>
+  <div id="inputArea">
+    <input type="text" id="userInput" placeholder="What do you want to ask LawGical?" />
+    <button id="sendBtn">Send</button>
+  </div>
+
+  <!-- Markdown Renderer -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <script type="module">
+    import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+
+    const API_KEY = "AIzaSyDJWbiYWr48KsViFW1TyjU00DAoSE8qVC0";
+    const genAI = new GoogleGenerativeAI(API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    const chatBox = document.getElementById("chat");
+    const userInput = document.getElementById("userInput");
+    const sendBtn = document.getElementById("sendBtn");
+
+    function addMessage(text, sender, isMarkdown=false) {
+      const div = document.createElement("div");
+      div.classList.add("message", sender);
+      if (isMarkdown) {
+        div.innerHTML = marked.parse(text); // render markdown
+      } else {
+        div.textContent = text;
+      }
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const text = userInput.value.trim();
+      if (!text) return;
+
+      addMessage("You: " + text, "user");
+      userInput.value = "";
+      try {
+        const result = await model.generateContent(
+          "You are LawGical, a virtual legal assistant. " +
+          "You provide legal information, explain laws, and give hypothetical advice. " + "Rely on credible sources like legal websites, law books, and law journals, actual past cases. Do not ever use quora, reddit, stackexchange, wikipedia, or any other non-credible                                 sources. " + "Along with the response, provide a list of sources you used to generate the response." + "Go through rigourous review so that your response could be used as actual legal information." +
+          "Do not give instructions for illegal activities.\n\nUser: " + text
+        );
+        const reply = result.response.text();
+        addMessage("LawGical: " + reply, "assistant", true);
+      } catch (err) {
+        addMessage("Error: " + err.message, "assistant");
+      }
+    }
+
+    sendBtn.addEventListener("click", sendMessage);
+    userInput.addEventListener("keydown", e => {
+      if (e.key === "Enter") sendMessage();
+    });
+  </script>
+</body>
+</html>
+
